@@ -1,0 +1,104 @@
+# Secrets — never push these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+
+# Local agent / IDE / OS state
+.claude/
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local n8n workspace dumps used during debugging
+.n8n_workspace/
+
+# CI / config we don't want public
+.github/
+
+# Python build / cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Real user data — NEVER push (contains attendee emails, real meeting transcripts, BRDs)
+meeting-master/data/store.json
+meeting-master/data/uploads/
+brd-agent/backend/local_brds.json
+
+# Proprietary attachments pulled during debugging
+LaunchMail/
+LanuchEmail.zip
+brd-agent-audio-summary.json
+brd-agent-new-brd.json
+audio.mp3
+canopy-skills.zip
+
+# One-shot debug / scratch files from earlier exploration
+.audio_meeting_id.txt
+.brd_payload.json
+.fix_attendees.json
+.probe*.txt
+.probe*.py
+.send_payload.json
+.stage*_payload.json
+.stage*_response.txt
+.update_attendees.json
+.upload_diag.py
+.diag*.py
+
+# Random one-off scripts that are not part of the product
+check_api.py
+check_execution.py
+check_settings.py
+check_wf.py
+debug_nodes.py
+debug_wf.py
+debug_wf_2.py
+final_check.py
+final_inspect.py
+final_retry.py
+final_validation.py
+inspect_and_test.py
+inspect_duration.py
+inspect_logic.py
+manage_wf_v2.py
+manage_wf_v3.py
+manage_wf_v4.py
+run_upload_v2.py
+run_validation.py
+scan_workflows.py
+test_final.py
+test_webhook.py
+validate_bridge.py
+validate_meeting.py
+validate_meeting_v2.py
+validate_post.py
+validate_wf.py
+verify_fix.py
+verify_fix_fixed.py
+e2e_validation.py
+find_wf.ps1
+find_wf_parsed.ps1
+
+# Internal-only ops/audit dumps
+docs/audit_results.json
+docs/audit_run.py
+
+# Portal gateway (not part of the hackathon submission)
+portal-gateway/
+
+# Internal mistakes log
+mistakes.md

@@ -1,0 +1,43 @@
+[Google Chat — #project-trendyrmc]
+
+[2026-05-14 14:22] Priya Sharma:
+Hey team, we need to align on the TrendyRMC remote control project. Quick brainstorm before tomorrow's review?
+
+[2026-05-14 14:23] Rohan Mehta:
+Sure. From engineering side we have three open questions —
+1. Do we go with IR or Bluetooth Low Energy?
+2. Are we targeting smart TV brands beyond Samsung and LG?
+3. What's our voice assistant integration plan?
+
+[2026-05-14 14:24] Amit Khanna:
+For voice — I think we should support Alexa AND Google Assistant from day 1. Both have 40%+ household penetration in our target metros.
+
+[2026-05-14 14:25] Priya Sharma:
+Agreed on dual voice support. On BLE vs IR — BLE has range advantage but battery drain is 2-3x. Let's do BLE for the premium SKU and dual-mode (BLE+IR) for the entry SKU.
+
+[2026-05-14 14:26] Rohan Mehta:
+That works. I'll spec it that way. Amit can you take the voice integration scope?
+
+[2026-05-14 14:27] Amit Khanna:
+Yes. I'll have a draft by Tuesday next week.
+
+[2026-05-14 14:28] Priya Sharma:
+Perfect. Also we need to lock pricing — entry SKU at INR 599 and premium at INR 1499 was the last conversation. Anyone has new inputs from marketing?
+
+[2026-05-14 14:29] Neha Singh:
+Marketing thinks 599 is too low — it cannibalizes our remote-control accessory line. They want entry at 799.
+
+[2026-05-14 14:30] Priya Sharma:
+OK let me circle back with the BU head and confirm by Friday. Action items:
+- Rohan: spec BLE+IR architecture by Thursday
+- Amit: voice integration draft by Tuesday
+- Priya: pricing lock by Friday
+- Neha: pull together marketing position by Thursday
+
+Schedule a follow-up review next Wednesday at 4 PM.
+
+[2026-05-14 14:31] Rohan Mehta:
+Got it.
+
+[2026-05-14 14:31] Amit Khanna:
+Will do.

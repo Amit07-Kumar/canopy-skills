@@ -1,0 +1,60 @@
+services:
+  meeting-master:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: meeting-master
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HOST_PORT:-5098}:5000"
+    volumes:
+      # Mount application code (development)
+      - ../backend:/app/backend:ro
+      - ../frontend:/app/frontend:ro
+      # Data directory for uploads
+      - meeting-master-data:/app/data
+    environment:
+      # Application
+      - PORT=5000
+      - ENV=${ENV:-production}
+      - DEBUG=${DEBUG:-false}
+      - UPLOAD_DIR=/app/data/uploads
+      - STORAGE_FILE=/app/data/meeting_master_store.json
+      
+      # AI Services (System default - OpenRouter)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - DEFAULT_LLM_MODEL=${DEFAULT_LLM_MODEL:-anthropic/claude-3.5-sonnet}
+      
+      # Transcription
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - SARVAM_API_KEY=${SARVAM_API_KEY:-}
+      - DEFAULT_STT_PROVIDER=${DEFAULT_STT_PROVIDER:-sarvam}
+      
+      # Descope Auth
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-https://auth.lehana.in}
+      - DESCOPE_PROJECT_ID=${DESCOPE_PROJECT_ID:-P39NXXbIdxR73iGD6sJV3EUyPFYv}
+      - APP_NAME_IN_AUTH=${APP_NAME_IN_AUTH:-meeting-master}
+      - AUTH_DISABLED=${AUTH_DISABLED:-false}
+      
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-local-dev-only-change-me}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS:-168}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      # Primary domain - lehana.in
+      - "traefik.http.routers.meeting-master.rule=(Host(`meeting.lehana.in`) || Host(`meeting.aidhunik.com`))"
+      - "traefik.http.routers.meeting-master.entrypoints=websecure"
+      - "traefik.http.routers.meeting-master.tls=true"
+      - "traefik.http.routers.meeting-master.tls.certresolver=letsencrypt"
+      - "traefik.http.services.meeting-master.loadbalancer.server.port=5000"
+
+volumes:
+  meeting-master-data:

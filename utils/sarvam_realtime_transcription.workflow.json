@@ -1,0 +1,107 @@
+{
+  "name": "Sarvam Realtime Meeting Transcription (chunked + simple diarization)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sarvam-realtime",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false,
+          "binaryData": true,
+          "binaryPropertyName": "audio"
+        }
+      },
+      "id": "wh-1",
+      "name": "Webhook: receive 30s audio chunk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "sarvam-realtime"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull metadata from headers/query so the caller can label speakers and stitch chunks.\nconst headers = $json.headers || {};\nconst query   = $json.query   || {};\nconst session_id     = headers['x-session-id']     || query.session_id     || 'session-' + Date.now();\nconst chunk_index    = parseInt(headers['x-chunk-index'] || query.chunk_index || '0', 10);\nconst speaker_hint   = headers['x-speaker']        || query.speaker        || ''; // optional: from VAD on client\nconst language_code  = headers['x-language']       || query.language_code  || 'unknown';\nconst model_name     = headers['x-model']          || query.model          || 'saarika:v2.5';\n\nreturn [{\n  json: {\n    session_id,\n    chunk_index,\n    speaker_hint,\n    language_code,\n    model_name,\n    received_at: new Date().toISOString()\n  },\n  binary: $binary\n}];"
+      },
+      "id": "code-1",
+      "name": "Parse chunk metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sarvam.ai/speech-to-text",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "model",         "value": "={{ $json.model_name }}" },
+            { "name": "language_code", "value": "={{ $json.language_code }}" },
+            { "parameterType": "formBinaryData", "name": "file", "inputDataFieldName": "audio" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json", "neverError": true } },
+          "timeout": 30000
+        }
+      },
+      "id": "http-1",
+      "name": "Sarvam /speech-to-text (chunk)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a running diarization label from the speaker_hint OR rotate when energy/silence boundary suggests a new speaker.\n// For zero-config use, rotate speaker label every Nth chunk (cheap demo-grade diarization).\nconst sarvam = $json;\nconst meta = $('Parse chunk metadata').first().json;\n\nconst transcript = sarvam.transcript || '';\nconst lang = sarvam.language_code || meta.language_code;\nconst error = sarvam.error || null;\n\n// Cheap speaker assignment:\n//   - if client passed x-speaker / ?speaker= use that verbatim\n//   - else rotate \"Speaker 1/2/3\" by mod 3 of chunk_index\nlet speaker = (meta.speaker_hint && String(meta.speaker_hint).trim()) || `Speaker ${(meta.chunk_index % 3) + 1}`;\n\nconst line = transcript ? `${speaker}: ${transcript}` : '';\n\nreturn [{\n  json: {\n    session_id: meta.session_id,\n    chunk_index: meta.chunk_index,\n    speaker,\n    language_code: lang,\n    transcript,\n    line,\n    received_at: meta.received_at,\n    transcribed_at: new Date().toISOString(),\n    sarvam_request_id: sarvam.request_id || null,\n    error\n  }\n}];"
+      },
+      "id": "code-2",
+      "name": "Label speaker + format line",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "options": {}
+      },
+      "id": "resp-1",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1160, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: receive 30s audio chunk": {
+      "main": [[{ "node": "Parse chunk metadata", "type": "main", "index": 0 }]]
+    },
+    "Parse chunk metadata": {
+      "main": [[{ "node": "Sarvam /speech-to-text (chunk)", "type": "main", "index": 0 }]]
+    },
+    "Sarvam /speech-to-text (chunk)": {
+      "main": [[{ "node": "Label speaker + format line", "type": "main", "index": 0 }]]
+    },
+    "Label speaker + format line": {
+      "main": [[{ "node": "Respond JSON", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "pinData": {},
+  "staticData": null,
+  "tags": [
+    { "id": "sarvam", "name": "sarvam" },
+    { "id": "transcription", "name": "transcription" }
+  ]
+}

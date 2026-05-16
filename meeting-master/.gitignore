@@ -1,0 +1,8 @@
+# Meeting Master Git Ignore
+__pycache__/
+*.pyc
+.env
+data/
+tmp/
+*.log
+node_modules/

@@ -1,0 +1,234 @@
+{
+  "name": "Sarvam Batch Transcription with Speaker Diarization",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sarvam-batch-diarize",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false,
+          "binaryData": true,
+          "binaryPropertyName": "audio"
+        }
+      },
+      "id": "wh-1",
+      "name": "Webhook: receive full audio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 320],
+      "webhookId": "sarvam-batch-diarize"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Capture caller metadata.\nconst h = $json.headers || {};\nconst q = $json.query || {};\nreturn [{\n  json: {\n    session_id: h['x-session-id'] || q.session_id || 'batch-' + Date.now(),\n    language_code: h['x-language'] || q.language_code || 'unknown',\n    model_name: h['x-model'] || q.model || 'saarika:v2.5',\n    with_timestamps: (h['x-timestamps'] || q.with_timestamps || 'true') !== 'false',\n    received_at: new Date().toISOString()\n  },\n  binary: $binary\n}];"
+      },
+      "id": "code-1",
+      "name": "Parse metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sarvam.ai/speech-to-text/job/init",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.model_name, language_code: $json.language_code, with_diarization: true, with_timestamps: $json.with_timestamps }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-init",
+      "name": "Sarvam: init batch job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decode the Azure blob SAS URL into base + token so we can PUT the audio.\nconst init = $json;\nconst uploadUrl = init.input_storage_path;\nconst jobId = init.job_id;\nif (!uploadUrl || !jobId) throw new Error('init response missing job_id or input_storage_path');\n\n// Pull binary from earlier node\nconst meta = $('Parse metadata').first();\nconst binary = meta.binary && meta.binary.audio ? meta.binary.audio : null;\nif (!binary) throw new Error('No audio binary in request');\n\n// Filename inside the blob container — must be unique per chunk if you ever chunk; here single file.\nconst filename = `audio_${jobId}.${(binary.fileExtension || 'mp3')}`;\nconst sasUrl = new URL(uploadUrl);\n// Azure SAS URL gives a directory; PUT to <dir>/<filename>?<query>\nconst pathParts = sasUrl.pathname.split('/');\npathParts.push(filename);\nconst targetUrl = `${sasUrl.protocol}//${sasUrl.host}${pathParts.join('/')}${sasUrl.search}`;\n\nreturn [{ json: { ...init, target_blob_url: targetUrl, blob_filename: filename }, binary: meta.binary }];"
+      },
+      "id": "code-2",
+      "name": "Compute blob target URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 320]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.target_blob_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-ms-blob-type", "value": "BlockBlob" },
+            { "name": "Content-Type",    "value": "application/octet-stream" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "audio",
+        "options": { "timeout": 60000 }
+      },
+      "id": "http-upload",
+      "name": "Upload audio to Azure blob",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.sarvam.ai/speech-to-text/job/{{ $('Compute blob target URL').first().json.job_id }}/start",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-start",
+      "name": "Sarvam: start job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 320]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "wait-1",
+      "name": "Initial wait 15s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1500, 320]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.sarvam.ai/speech-to-text/job/{{ $('Compute blob target URL').first().json.job_id }}/status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-status",
+      "name": "Poll job status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-success",
+              "leftValue": "={{ $json.job_state || $json.status }}",
+              "rightValue": "Completed",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-done",
+      "name": "Job complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1940, 320]
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "wait-2",
+      "name": "Wait 10s and re-poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1940, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resolve diarized transcript from the job status response.\nconst job = $json;\nconst outputs = job.outputs || job.output_files || [];\nconst diarized = job.diarized_transcript || null;\nconst transcript = job.transcript || (diarized && diarized.entries ? diarized.entries.map(e => `${e.speaker_id}: ${e.transcript}`).join('\\n') : '');\nreturn [{ json: {\n  job_id: job.job_id,\n  status: job.job_state || job.status,\n  transcript,\n  diarized_transcript: diarized,\n  output_files: outputs,\n  finished_at: new Date().toISOString()\n}}];"
+      },
+      "id": "code-3",
+      "name": "Format diarized response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "options": {}
+      },
+      "id": "resp-1",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2380, 220]
+    }
+  ],
+  "connections": {
+    "Webhook: receive full audio": {
+      "main": [[{ "node": "Parse metadata", "type": "main", "index": 0 }]]
+    },
+    "Parse metadata": {
+      "main": [[{ "node": "Sarvam: init batch job", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: init batch job": {
+      "main": [[{ "node": "Compute blob target URL", "type": "main", "index": 0 }]]
+    },
+    "Compute blob target URL": {
+      "main": [[{ "node": "Upload audio to Azure blob", "type": "main", "index": 0 }]]
+    },
+    "Upload audio to Azure blob": {
+      "main": [[{ "node": "Sarvam: start job", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: start job": {
+      "main": [[{ "node": "Initial wait 15s", "type": "main", "index": 0 }]]
+    },
+    "Initial wait 15s": {
+      "main": [[{ "node": "Poll job status", "type": "main", "index": 0 }]]
+    },
+    "Poll job status": {
+      "main": [[{ "node": "Job complete?", "type": "main", "index": 0 }]]
+    },
+    "Job complete?": {
+      "main": [
+        [{ "node": "Format diarized response", "type": "main", "index": 0 }],
+        [{ "node": "Wait 10s and re-poll", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 10s and re-poll": {
+      "main": [[{ "node": "Poll job status", "type": "main", "index": 0 }]]
+    },
+    "Format diarized response": {
+      "main": [[{ "node": "Respond JSON", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "pinData": {},
+  "staticData": null,
+  "tags": [
+    { "id": "sarvam", "name": "sarvam" },
+    { "id": "diarization", "name": "diarization" },
+    { "id": "batch", "name": "batch" }
+  ]
+}

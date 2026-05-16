@@ -1,0 +1,19 @@
+Speaker 1 (Priya): Good morning team. Let me kick off the Q3 planning review. We have three things on the agenda — the revenue dashboard, the auth patch deployment, and the partner onboarding flow.
+
+Speaker 2 (Rohan): I will own the revenue dashboard. I need it ready for review by Friday end of day. I will share a Loom walkthrough with marketing on Monday.
+
+Speaker 3 (Amit): I can take the auth patch. Rohan, can you give me the staging credentials by tomorrow morning? I will deploy the patch to production by Wednesday next week, right after the security audit on Tuesday.
+
+Speaker 1 (Priya): Sounds good. Schedule the planning review for Monday at 10 AM with all leadership invited. Also block a buyer feedback call on Tuesday at 3 PM with the partnerships team — Neha will join from their side.
+
+Speaker 2 (Rohan): I will also need someone to update the BRD before the leadership review. Priya, can you take that?
+
+Speaker 1 (Priya): Yes I will update the BRD by Sunday night and send it out for async review before the Monday meeting.
+
+Speaker 3 (Amit): One open question — do we have budget approval for the partner integration tooling? I need that confirmed before Wednesday or it will block the auth rollout.
+
+Speaker 1 (Priya): Let me follow up with finance today and confirm by tomorrow EOD. Anything else?
+
+Speaker 2 (Rohan): Nothing from my side. We are good.
+
+Speaker 1 (Priya): Great. Closing the call. Next sync Wednesday at 3 PM.

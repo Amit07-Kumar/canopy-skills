@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canopy | BRD Studio</title>
+    <link rel="stylesheet" href="styles.css?v=2.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="version.js?v=2.0"></script>
+</head>
+
+<body>
+
+    <!-- Sticky portal nav — identical to MoM Workspace -->
+    <nav class="top-nav">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div class="portal-brand">
+                <div class="portal-brand-mark">C</div>
+                <div class="portal-brand-copy-shell">
+                    <span class="portal-brand-eyebrow">Canopy Portal</span>
+                    <h1 class="portal-brand-title">BRD Studio</h1>
+                </div>
+            </div>
+            <div class="portal-module-switch" aria-label="Portal modules">
+                <a id="portal-link-meetings" class="portal-module-pill" href="#">MoM Workspace</a>
+                <a id="portal-link-brd" class="portal-module-pill is-active" href="#">BRD Studio</a>
+            </div>
+        </div>
+        <div class="top-nav-actions">
+            <button id="btn-settings" title="Settings">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+            <button id="btn-toggle-playground" class="hidden">🧪 Playground</button>
+            <button id="btn-toggle-dashboard">Advanced Dashboard</button>
+            <button class="bg-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Connect n8n
+            </button>
+        </div>
+    </nav>
+
+    <main class="app-shell">
+        <!-- HERO -->
+        <section class="requirewise-hero">
+            <div class="requirewise-hero-grid">
+                <div class="hero-story">
+                    <span class="hero-kicker">Canopy | BRD Studio</span>
+                    <h2 class="hero-title">Generate decisive BRDs from real meeting context.</h2>
+                    <p class="hero-description">Capture, summarise, and ship Business Requirements Documents grounded
+                    in real meeting transcripts, launch emails, and execution KPIs — without leaving the workspace.</p>
+                    <div class="hero-actions">
+                        <button id="btn-quick-dashboard" class="hero-action hero-action-primary">Open live dashboard</button>
+                    </div>
+                </div>
+                <div class="hero-status-stack">
+                    <div class="hero-status-card hero-status-card-primary">
+                        <span class="hero-status-label">Live mode</span>
+                        <strong id="rw-stat-mode">Core Studio</strong>
+                        <p id="rw-status-copy">Real API outputs only. Demo data and fake-success fallbacks are disabled.</p>
+                    </div>
+                    <div class="hero-metrics-grid">
+                        <div class="hero-metric-card">
+                            <span>Projects</span>
+                            <strong id="rw-stat-projects">0</strong>
+                            <p>In selector</p>
+                        </div>
+                        <div class="hero-metric-card">
+                            <span>Library</span>
+                            <strong id="rw-stat-brds">0</strong>
+                            <p>Ready to reuse</p>
+                        </div>
+                        <div class="hero-metric-card">
+                            <span>EHI</span>
+                            <strong id="rw-stat-health">--</strong>
+                            <p>Live KPI</p>
+                        </div>
+                        <div class="hero-metric-card">
+                            <span>Conflicts</span>
+                            <strong id="rw-stat-conflicts">0</strong>
+                            <p>Active live</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-workflow-strip">
+                <div class="workflow-step">
+                    <strong>1. Capture context</strong>
+                    <span>Pull in meeting transcripts, audio notes, and project tickets from the same portal family.</span>
+                </div>
+                <div class="workflow-step">
+                    <strong>2. Formalize requirements</strong>
+                    <span>Generate or update BRDs from the exact context your team just discussed.</span>
+                </div>
+                <div class="workflow-step">
+                    <strong>3. Review execution signal</strong>
+                    <span>Switch to the live dashboard to inspect delivery health and conflicts.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phase 1: BRD Studio bento grid -->
+        <div id="phase1-container" class="bento-grid">
+
+            <!-- BRD Generator (full width primary action) -->
+            <div id="card-generate" class="bento-item workflow-card workflow-card-primary">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    BRD Generator
+                </h3>
+                <p>Describe your project, paste meeting context, or use a transcript to draft a fresh Business Requirements Document.</p>
+
+                <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:1.25rem;">
+                    <div>
+                        <textarea id="brd-generator-text" style="min-height:170px;"
+                            placeholder="Describe your project requirements, goals, and key features here..."></textarea>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:0.85rem;">
+                        <div>
+                            <label class="uppercase tracking-wider" for="brd-generator-filename" style="display:block;margin-bottom:0.35rem;">BRD Filename</label>
+                            <input id="brd-generator-filename" type="text" placeholder="e.g. xmpp-launch-brd">
+                            <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.35rem;">Auto-sanitized: spaces → hyphens, lowercase, no special chars.</p>
+                        </div>
+
+                        <div id="brd-generator-slug-preview" class="hidden">
+                            <span>Filename:</span>
+                            <span id="brd-generator-slug-text"></span>
+                        </div>
+
+                        <button id="btn-generate-brd">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Generate BRD
+                        </button>
+
+                        <div id="brd-generator-status" class="hidden">
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <div class="animate-spin"></div>
+                                <span id="brd-generator-status-text">Creating File...</span>
+                            </div>
+                            <div class="w-full bg-white/10">
+                                <div id="brd-generator-progress" style="width:0%;height:100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update BRDs -->
+            <div id="card-update" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Update BRDs
+                </h3>
+                <p>Select an existing project and inject fresh context to evolve its Business Requirements Document.</p>
+
+                <div style="display:flex;flex-direction:column;gap:0.85rem;flex:1;">
+                    <div>
+                        <label class="uppercase tracking-wider" style="display:block;margin-bottom:0.35rem;">Target Project</label>
+                        <select id="project-select"><option>Loading projects...</option></select>
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;">
+                        <label class="uppercase tracking-wider" style="display:block;margin-bottom:0.35rem;">Summary / Context</label>
+                        <textarea id="update-brd-summary" style="flex:1;min-height:130px;"
+                            placeholder="Paste meeting notes, transcript summary, or any context to update the BRD with..."></textarea>
+                    </div>
+                    <button id="btn-update-brd">
+                        Sync Requirements
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </div>
+
+                <div id="brd-status" class="opacity-0 pointer-events-none">
+                    <div class="loader"></div>
+                    <p id="brd-status-text">Updating BRD...</p>
+                </div>
+            </div>
+
+            <!-- BRD Document Viewer -->
+            <div id="brd-viewer-card" class="bento-item workflow-card workflow-card-half">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem;">
+                    <h3 style="margin:0;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        BRD Document Viewer
+                    </h3>
+                    <span id="brd-viewer-label" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);"></span>
+                </div>
+                <p>Render generated or loaded BRDs with full Markdown formatting.</p>
+                <div id="brd-content-viewer" class="custom-scrollbar" style="flex:1;max-height:520px;overflow-y:auto;">
+                    <p style="color:var(--text-muted);font-style:italic;text-align:center;margin-top:3rem;">Generate, update, or load a BRD to view its content here.</p>
+                </div>
+            </div>
+
+            <!-- Meeting Transcripter -->
+            <div id="card-transcript" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                    Meeting Transcripter
+                </h3>
+                <p>Paste raw meeting transcripts to extract decisions, owners, and requirements.</p>
+
+                <textarea id="transcript-input" style="min-height:170px;"
+                    placeholder="Paste meeting transcript here..."></textarea>
+
+                <div style="display:flex;gap:0.75rem;margin-top:0.85rem;">
+                    <button id="btn-summarize-transcript">Extract Insights</button>
+                </div>
+
+                <div id="transcript-result" class="hidden custom-scrollbar" style="margin-top:0.85rem;max-height:200px;overflow-y:auto;"></div>
+
+                <button id="btn-brd-from-transcript" class="hidden" style="margin-top:0.75rem;">Update BRD with Insights</button>
+            </div>
+
+            <!-- Live Audio -->
+            <div id="card-audio" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                    Live Audio
+                </h3>
+                <p>Record a meeting in-browser, then push the captured insights straight into the BRD pipeline.</p>
+
+                <div class="audio-workbench">
+                    <div class="audio-capture-column">
+                        <div style="position:relative;">
+                            <div id="record-pulse" class="hidden"></div>
+                            <button id="btn-record">
+                                <div id="record-icon"></div>
+                            </button>
+                        </div>
+                        <p id="record-status">Click to start recording</p>
+                        <p id="audio-capture-note" class="audio-capture-note">Live audio needs mic access and a configured STT provider. If recording is blocked, use the transcript flow.</p>
+                        <button id="btn-brd-from-audio" class="hidden" style="margin-top:0.5rem;width:100%;">Update BRD</button>
+                    </div>
+                    <div class="audio-output-column">
+                        <div id="audio-result" class="custom-scrollbar" style="height:100%;min-height:170px;overflow-y:auto;">
+                            <p style="color:var(--text-muted);font-style:italic;text-align:center;margin-top:2rem;">Recording output will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Assigner -->
+            <div id="card-tasks" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    Task Assigner
+                </h3>
+                <p>Convert a meeting summary into actionable tasks with owners and deadlines.</p>
+
+                <div style="display:flex;flex-direction:column;gap:0.85rem;flex:1;">
+                    <textarea id="task-summary-input" style="min-height:140px;flex:1;" placeholder="Enter meeting summary..."></textarea>
+                    <button id="btn-assign-tasks">Generate Tasks</button>
+                    <div id="tasks-result" class="custom-scrollbar" style="min-height:120px;max-height:240px;overflow-y:auto;">
+                        <p style="color:var(--text-muted);font-style:italic;text-align:center;margin-top:1.5rem;">Tasks will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BRD Library -->
+            <div id="card-library" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    BRD Library
+                </h3>
+                <p>Browse persisted BRDs. Load a document into the viewer or open it in your editor.</p>
+
+                <input id="brd-library-search" type="search" placeholder="Search BRDs by name..." style="margin-bottom:0.75rem;">
+
+                <div id="brd-library-list" class="custom-scrollbar" style="flex:1;min-height:120px;max-height:320px;overflow-y:auto;">
+                    <p style="color:var(--text-muted);font-style:italic;text-align:center;margin-top:1.5rem;">Loading BRDs...</p>
+                </div>
+                <button id="btn-refresh-library" style="margin-top:0.75rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh Library
+                </button>
+            </div>
+
+            <!-- OpenProject Tickets -->
+            <div id="card-openproject" class="bento-item workflow-card workflow-card-half">
+                <h3>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    OpenProject Tickets
+                </h3>
+                <p>Pull live work-package tickets and push them directly into BRD updates.</p>
+
+                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.85rem;flex-wrap:wrap;">
+                    <button id="btn-fetch-tickets" style="width:auto;flex:0 0 auto;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Fetch Tickets
+                    </button>
+                    <span id="ticket-count-badge" class="hidden" style="padding:0.3rem 0.75rem;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid rgba(249,115,22,0.25);font-size:0.75rem;font-weight:700;"></span>
+                </div>
+                <div id="tickets-result" class="custom-scrollbar" style="flex:1;min-height:120px;max-height:420px;overflow-y:auto;">
+                    <p style="color:var(--text-muted);font-style:italic;text-align:center;margin-top:2rem;">Click "Fetch Tickets" to load work packages.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Phase 2: Advanced dashboard (hidden by default) -->
+        <div id="phase2-container" class="hidden" style="margin-top:3rem;">
+
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;">
+                <div>
+                    <h2 style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:0.75rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="28" height="28" style="color:var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Advanced Intelligence Dashboard
+                    </h2>
+                    <p id="dash-project-name" style="color:var(--text-secondary);margin-top:0.25rem;">Loading project…</p>
+                </div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <button id="btn-sync-slack" class="bg-red-500/20" style="width:auto;padding:0.5rem 1rem;border-radius:var(--radius-md);font-weight:600;font-size:0.85rem;background:#4A154B;color:white;">Sync Slack</button>
+                    <button id="btn-sync-gmail" class="bg-red-500/20" style="width:auto;padding:0.5rem 1rem;border-radius:var(--radius-md);font-weight:600;font-size:0.85rem;background:#EA4335;color:white;">Sync Gmail</button>
+                    <button id="btn-sync-files" class="bg-emerald-500/20" style="width:auto;padding:0.5rem 1rem;border-radius:var(--radius-md);font-weight:600;font-size:0.85rem;background:var(--gradient-primary);color:white;">Sync Files</button>
+                </div>
+            </div>
+
+            <!-- Tab navigation -->
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1.5rem;padding:0.35rem;background:var(--surface);border-radius:var(--radius-xl);width:fit-content;border:1px solid var(--surface-outline);">
+                <button class="dash-tab active-tab" data-tab="overview">📊 Overview</button>
+                <button class="dash-tab" data-tab="conflicts">⚡ Conflicts</button>
+                <button class="dash-tab" data-tab="graph">🕸 Knowledge Graph</button>
+                <button class="dash-tab" data-tab="brd">📄 BRD Editor</button>
+                <button class="dash-tab" data-tab="stakeholders">👥 Stakeholders</button>
+                <button class="dash-tab" data-tab="traceability">🔗 Traceability</button>
+            </div>
+
+            <!-- OVERVIEW tab -->
+            <div id="tab-overview" class="tab-pane">
+                <div id="kpi-bar" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1.5rem;"></div>
+
+                <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+                    <h3 style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">Live data sources</h3>
+                    <div id="data-sources-bar" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;"></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="font-family:var(--font-display);font-weight:700;color:var(--text-primary);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color:var(--primary-600);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Recent activity
+                        </h3>
+                        <ul id="activity-feed" class="custom-scrollbar" style="max-height:320px;overflow-y:auto;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;"></ul>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="font-family:var(--font-display);font-weight:700;color:var(--text-primary);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color:var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            Stakeholder sentiment
+                        </h3>
+                        <div id="stakeholder-sentiment-list" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFLICTS tab -->
+            <div id="tab-conflicts" class="tab-pane hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text-primary);">Conflict detection engine</h3>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;">AI-detected requirement conflicts across all data sources</p>
+                    </div>
+                    <div id="conflict-filter-btns" style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                        <button class="conflict-filter active-filter" data-filter="all">All</button>
+                        <button class="conflict-filter" data-filter="critical">🔴 Critical</button>
+                        <button class="conflict-filter" data-filter="high">🟠 High</button>
+                        <button class="conflict-filter" data-filter="medium">🟡 Medium</button>
+                        <button class="conflict-filter" data-filter="low">🟢 Low</button>
+                    </div>
+                </div>
+                <div id="conflicts-full-list" style="display:flex;flex-direction:column;gap:1rem;"></div>
+            </div>
+
+            <!-- KNOWLEDGE GRAPH tab -->
+            <div id="tab-graph" class="tab-pane hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                    <div>
+                        <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text-primary);">Temporal knowledge graph</h3>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;">Requirement evolution and stakeholder influence — click a node to explore</p>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button id="kg-reset-zoom" style="width:auto;padding:0.4rem 0.85rem;font-size:0.75rem;background:white;border:1px solid var(--surface-outline);border-radius:var(--radius-md);font-weight:600;">Reset Zoom</button>
+                        <button id="kg-toggle-labels" style="width:auto;padding:0.4rem 0.85rem;font-size:0.75rem;background:white;border:1px solid var(--surface-outline);border-radius:var(--radius-md);font-weight:600;">Toggle Labels</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:1rem;">
+                    <div class="glass-card" style="flex:1;height:520px;position:relative;overflow:hidden;padding:0;">
+                        <svg id="kg-svg" width="100%" height="100%"></svg>
+                    </div>
+                    <div id="kg-detail-panel" class="glass-card custom-scrollbar" style="width:300px;flex-shrink:0;height:520px;overflow-y:auto;padding:1.25rem;">
+                        <p style="color:var(--text-muted);font-size:0.85rem;text-align:center;margin-top:2rem;">Click any node to see its detail.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BRD EDITOR tab -->
+            <div id="tab-brd" class="tab-pane hidden">
+                <div style="display:flex;flex-wrap:wrap;gap:1.5rem;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                            <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text-primary);">BRD document</h3>
+                            <div id="brd-view-filter" style="display:flex;gap:0.25rem;padding:0.2rem;background:var(--surface);border:1px solid var(--surface-outline);border-radius:var(--radius-md);font-size:0.75rem;">
+                                <button class="brd-view-btn active" data-view="all">All</button>
+                                <button class="brd-view-btn" data-view="ceo">CEO</button>
+                                <button class="brd-view-btn" data-view="engineering">Engineering</button>
+                                <button class="brd-view-btn" data-view="pm">PM</button>
+                                <button class="brd-view-btn" data-view="ba">BA</button>
+                            </div>
+                        </div>
+                        <div id="brd-sections-accordion" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                    </div>
+                    <div style="width:300px;display:flex;flex-direction:column;gap:1rem;">
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="display:flex;align-items:center;gap:0.5rem;color:var(--text-primary);margin-bottom:0.35rem;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="color:var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                Natural language editor
+                            </h4>
+                            <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:0.85rem;">Describe a change in plain English — the AI will edit the BRD.</p>
+                            <textarea id="nl-edit-input" style="min-height:110px;" placeholder="e.g. Add a requirement for 2FA authentication for all admin users..."></textarea>
+                            <button id="btn-nl-update-brd" style="margin-top:0.85rem;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Apply change
+                            </button>
+                            <div id="nl-edit-result" class="hidden" style="margin-top:0.85rem;padding:0.75rem;background:var(--success-soft);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-md);color:var(--success);font-size:0.8rem;"></div>
+                        </div>
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="color:var(--text-primary);margin-bottom:0.85rem;">Document health</h4>
+                            <div id="brd-doc-stats" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                        </div>
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="display:flex;align-items:center;gap:0.5rem;color:var(--text-primary);margin-bottom:0.85rem;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="color:var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                Citation sources
+                            </h4>
+                            <div id="citation-sources" style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.8rem;color:var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAKEHOLDERS tab -->
+            <div id="tab-stakeholders" class="tab-pane hidden">
+                <div style="display:flex;gap:0.4rem;margin-bottom:1.5rem;padding:0.35rem;background:var(--surface);border:1px solid var(--surface-outline);border-radius:var(--radius-xl);width:fit-content;">
+                    <button class="stakeholder-view-tab active-stakeholder-tab" data-view="overview">All Stakeholders</button>
+                    <button class="stakeholder-view-tab" data-view="ceo">💰 CEO</button>
+                    <button class="stakeholder-view-tab" data-view="engineering">⚙️ Engineering</button>
+                    <button class="stakeholder-view-tab" data-view="pm">📋 PM</button>
+                    <button class="stakeholder-view-tab" data-view="ba">📊 BA</button>
+                </div>
+                <div id="sh-view-overview" class="stakeholder-view-pane">
+                    <div id="stakeholder-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;"></div>
+                </div>
+                <div id="sh-view-ceo" class="stakeholder-view-pane hidden">
+                    <div id="ceo-kpi-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;"></div>
+                </div>
+                <div id="sh-view-engineering" class="stakeholder-view-pane hidden"><div id="engineering-view-content"></div></div>
+                <div id="sh-view-pm" class="stakeholder-view-pane hidden"><div id="pm-view-content"></div></div>
+                <div id="sh-view-ba" class="stakeholder-view-pane hidden"><div id="ba-view-content"></div></div>
+            </div>
+
+            <!-- TRACEABILITY tab -->
+            <div id="tab-traceability" class="tab-pane hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text-primary);">Requirements traceability matrix</h3>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;">End-to-end coverage: source → requirement → test case</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span id="trace-coverage-badge" style="font-size:0.75rem;color:var(--text-muted);"></span>
+                        <button style="width:auto;padding:0.4rem 0.85rem;font-size:0.75rem;background:var(--primary-100);color:var(--primary-700);border:1px solid rgba(31,107,69,0.25);border-radius:var(--radius-md);font-weight:600;">Export CSV</button>
+                    </div>
+                </div>
+                <div class="glass-card" style="overflow:hidden;padding:0;">
+                    <div style="overflow-x:auto;" class="custom-scrollbar">
+                        <table id="traceability-table" style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+                            <thead>
+                                <tr style="border-bottom:1px solid var(--surface-outline);">
+                                    <th style="padding:0.85rem 1rem;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Req. ID</th>
+                                    <th style="padding:0.85rem 1rem;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Description</th>
+                                    <th style="padding:0.85rem 1rem;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Sources</th>
+                                    <th style="padding:0.85rem 1rem;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Status</th>
+                                    <th style="padding:0.85rem 1rem;text-align:left;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Test Case</th>
+                                </tr>
+                            </thead>
+                            <tbody id="traceability-tbody" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Phase 3: Playground (hidden) -->
+        <div id="playground-container" class="hidden" style="margin-top:3rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h2 style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--text-primary);">🧪 BRD Playground</h2>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">Generate BRDs from emails & chat context</p>
+                </div>
+                <span id="pg-dataset-badge" style="padding:0.3rem 0.75rem;border-radius:999px;background:var(--primary-50);color:var(--primary-700);border:1px solid rgba(31,107,69,0.18);font-size:0.75rem;font-weight:700;"></span>
+            </div>
+
+            <div id="pg-error-container"></div>
+
+            <div class="glass-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+                <h3 style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-primary);">Step 1: Select an email / transcript</h3>
+                <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:1rem;">Choose a meeting transcript to generate a BRD from</p>
+                <div id="pg-email-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:1rem;"></div>
+                <div id="pg-transcript-preview" class="glass-card hidden custom-scrollbar" style="padding:1rem;margin-bottom:1rem;max-height:200px;overflow-y:auto;"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button id="btn-pg-generate-brd" disabled style="width:auto;padding:0.7rem 1.5rem;opacity:0.5;">Generate BRD from email</button>
+                </div>
+            </div>
+
+            <div id="pg-brd-output" class="glass-card hidden" style="padding:1.5rem;margin-bottom:1.5rem;"></div>
+
+            <div id="pg-chat-section" class="glass-card hidden" style="padding:1.5rem;margin-bottom:1.5rem;">
+                <h3 style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-primary);">Step 2: Integrate chat context</h3>
+                <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:1rem;">Select a related chat to integrate additional requirements</p>
+                <div id="pg-chat-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:1rem;"></div>
+                <div id="pg-dialogue-preview" class="glass-card hidden custom-scrollbar" style="padding:1rem;margin-bottom:1rem;max-height:200px;overflow-y:auto;"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button id="btn-pg-integrate-chat" disabled style="width:auto;padding:0.7rem 1.5rem;opacity:0.5;">Integrate chat into BRD</button>
+                </div>
+            </div>
+
+            <div id="pg-integration-result" class="hidden">
+                <div id="pg-integration-summary" class="glass-card" style="padding:1.5rem;margin-bottom:1rem;"></div>
+                <div id="pg-diff-output" class="glass-card" style="padding:1.5rem;"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Settings modal -->
+    <div id="settings-modal" class="hidden" style="position:fixed;inset:0;z-index:100;">
+        <div id="settings-overlay" style="position:absolute;inset:0;background:rgba(16,42,67,0.5);backdrop-filter:blur(8px);"></div>
+        <div class="settings-panel" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:32rem;padding:1.75rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+                <h3 style="font-family:var(--font-display);font-weight:700;display:flex;align-items:center;gap:0.5rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="color:var(--text-secondary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Settings
+                </h3>
+                <button id="btn-close-settings">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <h4 style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.85rem;">Live mode</h4>
+            <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:1rem;">Visible dashboard features depend on live API responses. Unsupported views stay disabled until their backend workflow is connected.</p>
+
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                <div style="padding:1rem;border-radius:var(--radius-md);background:var(--primary-50);border:1px solid rgba(31,107,69,0.18);">
+                    <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+                        <span style="font-size:1.1rem;">✅</span>
+                        <div>
+                            <span style="font-weight:700;color:var(--text-primary);font-size:0.9rem;">Live mode only</span>
+                            <p style="color:var(--text-secondary);font-size:0.78rem;margin-top:0.25rem;">RequireWise shows only data returned by real APIs. Demo datasets and fake-success fallbacks are disabled.</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:1rem;border-radius:var(--radius-md);background:var(--warning-soft);border:1px solid rgba(245,158,11,0.25);">
+                    <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+                        <span style="font-size:1.1rem;">⚠️</span>
+                        <div>
+                            <span style="font-weight:700;color:var(--text-primary);font-size:0.9rem;">Partially wired features</span>
+                            <p style="color:var(--text-secondary);font-size:0.78rem;margin-top:0.25rem;">Views without live backend support stay hidden until their workflow is connected.</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:0.85rem;border-radius:var(--radius-md);background:var(--info-soft);border:1px solid rgba(59,130,246,0.25);">
+                    <p style="color:var(--info);font-size:0.78rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        If a workflow is inactive, the UI shows the real failure instead of substituting sample data.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast (starts hidden with translate-y-20 + opacity-0; script.js
+         removes those classes to slide it in) -->
+    <div id="toast" role="status" class="translate-y-20 opacity-0 pointer-events-none border-primary">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-msg">Action completed successfully</span>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="dashboard.js?v=2.0"></script>
+    <script src="script.js?v=2.0"></script>
+</body>
+
+</html>

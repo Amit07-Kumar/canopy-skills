@@ -1,0 +1,42 @@
+From: amit.kumar5@indiamart.com
+To: product-team@indiamart.com
+Subject: New BRD request — Premium Seller Verification Flow
+Date: 2026-05-14T10:30:00+05:30
+
+Hi team,
+
+We need to build a new flow for verifying premium sellers before they get the "verified" badge on the marketplace. Here is what I have gathered so far from the partnership conversations and the customer success team.
+
+Problem statement:
+- Today any seller can get the premium tag by paying — we are not validating their actual fulfilment quality.
+- Buyer complaints are up 18% in Q2 because of mismatched expectations.
+- Trust score on the marketplace is dropping; competitor B2B platforms are eating into our share in metals and packaging.
+
+What we want to build:
+1. Multi-step verification — KYC documents + GST validation + last-12-months fulfilment metrics.
+2. Manual review queue for the trust-and-safety team (3-person team in Noida).
+3. Re-verification every 6 months automatically.
+4. A "Verified Premium" badge with a hover tooltip showing the verification date.
+5. API for partner platforms to query verification status.
+
+Users:
+- Sellers — submit verification, view status.
+- Trust & Safety analysts — review queue, approve/reject.
+- Buyers — see badge on listings.
+- Partner platforms — read-only API.
+
+Constraints:
+- Launch by end of Q3 (September 2026).
+- Must integrate with the existing PaymentGateway and Listing services.
+- GDPR-equivalent compliance for verification data retention.
+- Mobile and web parity.
+
+Open questions:
+- Do we charge sellers extra for verification, or include it in premium tier?
+- What is the SLA for the manual review queue — 24h or 48h?
+- Do we expose verification status via the public seller profile or behind login?
+
+Could you turn this into a proper BRD with functional/non-functional requirements, risk register, and a phased rollout plan?
+
+Thanks,
+Amit

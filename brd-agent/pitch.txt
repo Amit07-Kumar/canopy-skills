@@ -1,0 +1,43 @@
+RequireWise: The Autonomous BRD & Meeting Intelligence Agent
+
+Transforming messy meeting audio into structured Business Requirement Documents, actionable tasks, and calendar events in seconds.
+
+--- THE PROBLEM ---
+Product Managers, Business Analysts, and Tech Leads spend countless hours manually transcribing meetings, extracting requirements, and drafting Business Requirement Documents (BRDs). 
+- Context Loss: Critical details are forgotten between the meeting and the documentation phase.
+- Delayed Kickoffs: Projects stall while waiting for formal requirements to be written and approved.
+- Misaligned Teams: Unstructured meeting notes lead to ambiguous tasks and miscommunication between business and engineering teams.
+
+--- OUR SOLUTION ---
+RequireWise is an AI-driven autonomous agent that listens to your meetings, instantly generates Minutes of Meeting (MOM), extracts tasks, and automatically drafts comprehensive, Google Docs-ready BRDs. It bridges the gap between raw conversation and structured project execution.
+
+--- CORE FEATURES ---
+- Intelligent Meeting Recorder: Upload audio or paste transcripts to instantly generate structured MOM, action items, and calendar events.
+- Autonomous BRD Generator: Converts meeting context into comprehensive, structured Business Requirement Documents with a single click.
+- BRD Updater & Live Viewer: Update existing BRDs with new context and instantly view the rendered BRD document — headings, sections, and formatting all rendered beautifully in-page.
+- Smart Task Assigner: Automatically identifies tasks from meetings and assigns them to the right team members.
+- Integrated BRD Library: A centralized repository of all generated BRDs with Load BRD (in-page markdown rendering) and Google Docs preview links.
+- OpenProject Ticket Integration: Fetch and view work packages directly from a connected OpenProject instance for full project traceability.
+
+--- ADVANCED & PLAYGROUND FEATURES ---
+- Contextual Cross-Fill: Seamlessly flows data from the meeting recorder directly into the BRD generator — zero copy-pasting required.
+- n8n Workflow Orchestration: Powered by advanced n8n webhooks for scalable AI summarization, transcription, and document management.
+- Native Google Workspace Integration: BRDs are instantly generated as formatted Google Docs, calendar events are auto-created, and MOM is emailed to all stakeholders.
+- Full-Width Bento UI: A modern, single-column dashboard designed for maximum data visibility and zero scrolling to access any feature.
+- Beautiful Markdown Rendering: In-page BRD Document Viewer with full markdown support — headings, bold, italic, code blocks, links, lists, and blockquotes all rendered with styled formatting.
+- Smart Title Casing & Formatting: Automatically formats project names and document titles for professional presentation.
+
+--- TECHNICAL ARCHITECTURE ---
+- Frontend: High-performance Vanilla JS with Tailwind CSS, utilizing a custom responsive Bento Grid layout.
+- Backend: Lightning-fast FastAPI (Python) serving as the API gateway.
+- Orchestration: n8n for complex AI workflows, audio processing, and Google Drive/Docs API integrations.
+- Deployment: Fully containerized with Docker, reverse-proxied via Traefik with automated SSL.
+
+--- IMPACT & METRICS ---
+- 10x Faster Project Kickoffs: Go from initial meeting to approved BRD in minutes, not days.
+- 0% Context Loss: Every requirement discussed is captured and documented.
+- 100% Team Alignment: Clear tasks, structured requirements, and instant documentation access for all stakeholders.
+
+--- CONTACT & DEMO ---
+- Live Demo: https://brd.lehana.in
+- API Health: https://brd.lehana.in/health

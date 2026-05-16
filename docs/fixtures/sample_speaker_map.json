@@ -1,0 +1,6 @@
+{
+  "speakerA": "Good morning team. Let me kick off the Q3 planning review. We have three things on the agenda — the revenue dashboard, the auth patch deployment, and the partner onboarding flow.",
+  "speakerB": "I will own the revenue dashboard. I need it ready for review by Friday end of day. I will share a Loom walkthrough with marketing on Monday.",
+  "speakerC": "I can take the auth patch. Rohan, can you give me the staging credentials by tomorrow morning? I will deploy the patch to production by Wednesday next week, right after the security audit on Tuesday.",
+  "speakerA": "Schedule the planning review for Monday at 10 AM with all leadership invited. Also block a buyer feedback call on Tuesday at 3 PM with the partnerships team."
+}

@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Data files (too large for git, keep on server)
+data/emails/*.csv
+data/chats/*.csv
+
+# Temp
+tmp/
+*.tmp

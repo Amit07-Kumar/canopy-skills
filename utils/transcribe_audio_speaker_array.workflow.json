@@ -1,0 +1,397 @@
+{
+  "name": "Transcribe Audio with Speaker Array (Sarvam Batch v1)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "transcribe-speakers",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryData": true,
+          "binaryPropertyName": "audio"
+        }
+      },
+      "id": "wh-1",
+      "name": "Webhook: receive audio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 320],
+      "webhookId": "transcribe-speakers"
+    },
+    {
+      "parameters": {
+        "jsCode": "const headers = $json.headers || {};\nconst query = $json.query || {};\nconst binaryEntries = Object.entries($binary || {});\nconst firstBinaryEntry = binaryEntries[0] || null;\nconst binary = firstBinaryEntry ? firstBinaryEntry[1] : null;\nif (!binary) throw new Error('No audio binary found in request');\nconst ext = binary.fileExtension || 'webm';\nconst fileName = binary.fileName || `audio_${Date.now()}.${ext}`;\nreturn [{ json: { session_id: headers['x-session-id'] || query.session_id || `transcribe-${Date.now()}`, language_code: headers['x-language'] || query.language_code || 'unknown', model_name: headers['x-model'] || query.model || 'saaras:v3', with_timestamps: (headers['x-timestamps'] || query.with_timestamps || 'true') !== 'false', file_name: fileName }, binary: { audio: binary } }];"
+      },
+      "id": "code-meta",
+      "name": "Parse metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sarvam.ai/speech-to-text/job/v1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ job_parameters: { model: $('Parse metadata').first().json.model_name, mode: 'transcribe', language_code: $('Parse metadata').first().json.language_code, with_diarization: true, with_timestamps: $('Parse metadata').first().json.with_timestamps } }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-init",
+      "name": "Sarvam: create batch job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sarvam.ai/speech-to-text/job/v1/upload-files",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: $('Sarvam: create batch job').first().json.job_id, files: [ $('Parse metadata').first().json.file_name ] }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-upload-links",
+      "name": "Sarvam: request upload URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [840, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $json || {};\nconst fileName = $('Parse metadata').first().json.file_name;\nconst uploadUrls = payload.upload_urls || {};\nconst details = uploadUrls[fileName] || {};\nconst fileUrl = details.file_url;\nif (!fileUrl) throw new Error(`No signed upload URL returned for ${fileName}`);\nreturn [{ json: { job_id: $('Sarvam: create batch job').first().json.job_id, file_name: fileName, upload_url: fileUrl }, binary: $('Parse metadata').first().binary }];"
+      },
+      "id": "code-upload-target",
+      "name": "Resolve upload target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 320]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.upload_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-ms-blob-type", "value": "BlockBlob" },
+            { "name": "Content-Type", "value": "application/octet-stream" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "audio",
+        "options": { "timeout": 600000 }
+      },
+      "id": "http-upload",
+      "name": "Upload audio to signed URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.sarvam.ai/speech-to-text/job/v1/{{ $('Resolve upload target').first().json.job_id }}/start",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-start",
+      "name": "Sarvam: start job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 320]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "wait-initial",
+      "name": "Initial wait 15s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1720, 320]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.sarvam.ai/speech-to-text/job/v1/{{ $('Resolve upload target').first().json.job_id }}/status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-status",
+      "name": "Sarvam: poll job status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1940, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $json || {};\nconst state = String(payload.job_state || payload.status || '').toLowerCase();\nconst outputFiles = [];\nfor (const detail of payload.job_details || []) {\n  for (const output of detail.outputs || []) {\n    if (output && output.file_name) outputFiles.push(output.file_name);\n  }\n}\nconst hasInlineTranscript = Boolean((payload.diarized_transcript && Array.isArray(payload.diarized_transcript.entries) && payload.diarized_transcript.entries.length) || payload.transcript);\nreturn [{ json: { ...payload, state_lower: state, is_failed: ['failed', 'error', 'cancelled', 'canceled'].includes(state), has_inline_transcript: hasInlineTranscript, output_files: outputFiles, needs_download: outputFiles.length > 0 && !hasInlineTranscript } }];"
+      },
+      "id": "code-status",
+      "name": "Normalize job status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-complete",
+              "leftValue": "={{ $json.state_lower }}",
+              "rightValue": "completed",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-complete",
+      "name": "Job completed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2380, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "needs-download",
+              "leftValue": "={{ String($json.needs_download) }}",
+              "rightValue": "true",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-download",
+      "name": "Need download files?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2600, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sarvam.ai/speech-to-text/job/v1/download-files",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "api-subscription-key", "value": "={{ $env.SARVAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: $('Normalize job status').first().json.job_id, files: $('Normalize job status').first().json.output_files }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-download-links",
+      "name": "Sarvam: request download URLs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2820, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const downloadUrls = $json.download_urls || {};\nfor (const [fileName, details] of Object.entries(downloadUrls)) {\n  if (details && details.file_url) {\n    return [{ json: { file_name: fileName, file_url: details.file_url } }];\n  }\n}\nthrow new Error('No signed download URL returned for completed Sarvam batch job');"
+      },
+      "id": "code-download-target",
+      "name": "Resolve download target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3040, 120]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.file_url }}",
+        "options": {
+          "timeout": 30000,
+          "response": { "response": { "responseFormat": "json" } }
+        }
+      },
+      "id": "http-download",
+      "name": "Download transcript payload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3260, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "resp-download",
+      "name": "Respond downloaded JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3480, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "resp-inline",
+      "name": "Respond inline JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2820, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-failed",
+              "leftValue": "={{ String($json.is_failed) }}",
+              "rightValue": "true",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-failed",
+      "name": "Job failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2600, 460]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.error || 'Sarvam batch job failed', job_id: $json.job_id, status: $json.job_state || $json.status } }}",
+        "options": {}
+      },
+      "id": "resp-failed",
+      "name": "Respond failure JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2820, 400]
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "wait-repoll",
+      "name": "Wait 10s and re-poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2820, 560]
+    }
+  ],
+  "connections": {
+    "Webhook: receive audio": {
+      "main": [[{ "node": "Parse metadata", "type": "main", "index": 0 }]]
+    },
+    "Parse metadata": {
+      "main": [[{ "node": "Sarvam: create batch job", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: create batch job": {
+      "main": [[{ "node": "Sarvam: request upload URL", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: request upload URL": {
+      "main": [[{ "node": "Resolve upload target", "type": "main", "index": 0 }]]
+    },
+    "Resolve upload target": {
+      "main": [[{ "node": "Upload audio to signed URL", "type": "main", "index": 0 }]]
+    },
+    "Upload audio to signed URL": {
+      "main": [[{ "node": "Sarvam: start job", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: start job": {
+      "main": [[{ "node": "Initial wait 15s", "type": "main", "index": 0 }]]
+    },
+    "Initial wait 15s": {
+      "main": [[{ "node": "Sarvam: poll job status", "type": "main", "index": 0 }]]
+    },
+    "Sarvam: poll job status": {
+      "main": [[{ "node": "Normalize job status", "type": "main", "index": 0 }]]
+    },
+    "Normalize job status": {
+      "main": [[{ "node": "Job completed?", "type": "main", "index": 0 }]]
+    },
+    "Job completed?": {
+      "main": [
+        [{ "node": "Need download files?", "type": "main", "index": 0 }],
+        [{ "node": "Job failed?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Need download files?": {
+      "main": [
+        [{ "node": "Sarvam: request download URLs", "type": "main", "index": 0 }],
+        [{ "node": "Respond inline JSON", "type": "main", "index": 0 }]
+      ]
+    },
+    "Sarvam: request download URLs": {
+      "main": [[{ "node": "Resolve download target", "type": "main", "index": 0 }]]
+    },
+    "Resolve download target": {
+      "main": [[{ "node": "Download transcript payload", "type": "main", "index": 0 }]]
+    },
+    "Download transcript payload": {
+      "main": [[{ "node": "Respond downloaded JSON", "type": "main", "index": 0 }]]
+    },
+    "Job failed?": {
+      "main": [
+        [{ "node": "Respond failure JSON", "type": "main", "index": 0 }],
+        [{ "node": "Wait 10s and re-poll", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 10s and re-poll": {
+      "main": [[{ "node": "Sarvam: poll job status", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "pinData": {},
+  "staticData": null,
+  "tags": [
+    { "id": "transcribe", "name": "transcribe" },
+    { "id": "sarvam", "name": "sarvam" },
+    { "id": "batch", "name": "batch" }
+  ]
+}

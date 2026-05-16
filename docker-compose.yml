@@ -1,0 +1,143 @@
+# Unified compose — spins up Meeting Master + BRD Studio behind a single Canopy portal.
+# From d:\10xHackathon\ : `docker compose up -d --build`
+#
+# Hostnames inside the docker network: `meeting-master`, `brd-agent`, `portal-gateway`.
+# Internal ports: 5000 (MM), 8025 (BR). Primary external portal: 5080.
+
+services:
+  portal-gateway:
+    build:
+      context: ./portal-gateway
+      dockerfile: Dockerfile
+    image: 10xhackathon-portal-gateway:latest
+    container_name: 10xh-portal-gateway
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5080:80"
+    depends_on:
+      meeting-master:
+        condition: service_healthy
+      brd-agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - 10xh-net
+
+  meeting-master:
+    build:
+      context: ./meeting-master
+      dockerfile: docker/Dockerfile
+    image: 10xhackathon-meeting-master:latest
+    container_name: 10xh-meeting-master
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5098:5000"
+    volumes:
+      - meeting-master-data:/app/data
+    environment:
+      # Application
+      PORT: "5000"
+      DEBUG: "true"
+      DEBUG_MODE: "true"
+      UPLOAD_DIR: /app/data/uploads
+      STORAGE_FILE: /app/data/store.json
+
+      # Auth — disabled for local container demo (same as scripts/start-demo.ps1)
+      AUTH_DISABLED: "true"
+      JWT_SECRET: local-docker-only-change-me
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION_HOURS: "168"
+      DESCOPE_PROJECT_ID: P39NXXbIdxR73iGD6sJV3EUyPFYv
+      APP_NAME_IN_AUTH: meeting-master
+
+      # n8n webhook pipeline (Stage 1/2/3) — reachable from any container
+      USE_N8N_WEBHOOKS: "true"
+      N8N_WEBHOOK_TRANSCRIBE_AUDIO: ${N8N_WEBHOOK_TRANSCRIBE_AUDIO:-https://imworkflow.intermesh.net/webhook/transcribe-speakers}
+      N8N_WEBHOOK_AI_SUMMARIZATION: ${N8N_WEBHOOK_AI_SUMMARIZATION:-https://imworkflow.intermesh.net/webhook/AISummarization}
+      N8N_WEBHOOK_GOOGLE_TOOLS:     ${N8N_WEBHOOK_GOOGLE_TOOLS:-https://n8n.backend.lehana.in/webhook/google_tool_event}
+      N8N_WEBHOOK_SEND_EMAIL:       ${N8N_WEBHOOK_SEND_EMAIL:-https://n8n.backend.lehana.in/webhook/google_tool_event}
+      N8N_WEBHOOK_TIMEOUT:          "120"
+
+      # BRD bridge — Meeting Master calls BRD agent by service name
+      BRD_AGENT_API_BASE: http://brd-agent:8025/api
+
+      # Optional AI providers (only set if you actually have keys)
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      DEFAULT_LLM_MODEL:  ${DEFAULT_LLM_MODEL:-meta-llama/llama-3.3-70b-instruct:free}
+      DEEPGRAM_API_KEY:   ${DEEPGRAM_API_KEY:-}
+      GROQ_API_KEY:       ${GROQ_API_KEY:-}
+      SARVAM_API_KEY:     ${SARVAM_API_KEY:-}
+      DEFAULT_STT_PROVIDER: ${DEFAULT_STT_PROVIDER:-sarvam}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - 10xh-net
+
+  brd-agent:
+    build:
+      context: ./brd-agent
+      dockerfile: Dockerfile
+    image: 10xhackathon-brd-agent:latest
+    container_name: 10xh-brd-agent
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    environment:
+      # Cross-app bridge — BRD calls Meeting Master by service name
+      MEETING_MASTER_API_BASE: http://meeting-master:5000/api/v1
+
+      # n8n endpoints used by the BRD agent (lehana instance — separate)
+      N8N_WEBHOOK_UPDATE_BRD:           ${N8N_WEBHOOK_UPDATE_BRD:-https://n8n.backend.lehana.in/webhook/update-brd}
+      N8N_WEBHOOK_NEW_BRD:              ${N8N_WEBHOOK_NEW_BRD:-https://n8n.backend.lehana.in/webhook/new-brd}
+      N8N_WEBHOOK_LIST_BRDS:            ${N8N_WEBHOOK_LIST_BRDS:-https://n8n.backend.lehana.in/webhook/list-brds}
+      N8N_WEBHOOK_AI_SUMMARIZATION:     ${N8N_WEBHOOK_AI_SUMMARIZATION:-https://imworkflow.intermesh.net/webhook/AISummarization}
+      N8N_WEBHOOK_TRANSCRIBE_AUDIO:     ${N8N_WEBHOOK_TRANSCRIBE_AUDIO:-https://imworkflow.intermesh.net/webhook/transcribe-speakers}
+      N8N_WEBHOOK_GOOGLE_TOOLS:         ${N8N_WEBHOOK_GOOGLE_TOOLS:-https://n8n.backend.lehana.in/webhook/google_tool_event}
+      N8N_WEBHOOK_KNOWLEDGE_GRAPH:      ${N8N_WEBHOOK_KNOWLEDGE_GRAPH:-https://n8n.backend.lehana.in/webhook/knowledge-graph}
+      N8N_WEBHOOK_SLACK_INTEGRATION:    ${N8N_WEBHOOK_SLACK_INTEGRATION:-https://n8n.backend.lehana.in/webhook/slack-integration}
+      N8N_WEBHOOK_GMAIL_INTEGRATION:    ${N8N_WEBHOOK_GMAIL_INTEGRATION:-https://n8n.backend.lehana.in/webhook/gmail-integration}
+      N8N_WEBHOOK_GENERATE_BRD_FROM_EMAIL: ${N8N_WEBHOOK_GENERATE_BRD_FROM_EMAIL:-https://n8n.backend.lehana.in/webhook/generate-brd-from-email}
+      BRD_AGENT_LLM_API_KEY:            ${BRD_AGENT_LLM_API_KEY:-}
+      BRD_AGENT_LLM_BASE_URL:           ${BRD_AGENT_LLM_BASE_URL:-https://imllm.intermesh.net/}
+      BRD_AGENT_LLM_MODEL:              ${BRD_AGENT_LLM_MODEL:-anthropic/claude-opus-4-6}
+      SARVAM_API_KEY:                   ${SARVAM_API_KEY:-}
+      FILE_SEARCH_API_BASE:             ${FILE_SEARCH_API_BASE:-}
+      FILE_SEARCH_REQUEST_JSON:         ${FILE_SEARCH_REQUEST_JSON:-}
+      FILE_SEARCH_TIMEOUT_SECONDS:      ${FILE_SEARCH_TIMEOUT_SECONDS:-45}
+      FILE_SEARCH_MAX_CONTEXT_CHARS:    ${FILE_SEARCH_MAX_CONTEXT_CHARS:-6000}
+      FILE_SEARCH_MAX_ITEMS:            ${FILE_SEARCH_MAX_ITEMS:-8}
+
+      # Optional OpenProject (left empty → falls back to local sample tickets)
+      OPENPROJECT_API_URL:    ${OPENPROJECT_API_URL:-}
+      OPENPROJECT_API_KEY:    ${OPENPROJECT_API_KEY:-}
+      OPENPROJECT_PROJECT:    ${OPENPROJECT_PROJECT:-}
+      OPENPROJECT_TICKET_TYPE: ${OPENPROJECT_TICKET_TYPE:-}
+    depends_on:
+      meeting-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8025/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - 10xh-net
+
+volumes:
+  meeting-master-data:
+    name: 10xh-meeting-master-data
+
+networks:
+  10xh-net:
+    name: 10xh-net
+    driver: bridge

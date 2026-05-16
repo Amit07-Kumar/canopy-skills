@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canopy Meeting Workspace - capture meetings, shape follow-ups, and move into BRD work without leaving the portal">
+    <meta name="theme-color" content="#0f766e">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    
+    <title>Canopy | Meeting Workspace</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Descope Auth SDK -->
+    <script src="https://unpkg.com/@descope/web-component@latest/dist/index.js"></script>
+    
+    <link rel="stylesheet" href="/static/styles.css?v=1.9">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-card">
+            <div class="loader"></div>
+            <p id="loading-eyebrow" class="loading-eyebrow">Working on it</p>
+            <h3 id="loading-title" class="loading-title">Please wait a moment</h3>
+            <p id="loading-text" class="loading-text">We are getting everything ready.</p>
+            <div id="loading-progress-shell" class="loading-progress-shell hidden">
+                <div class="loading-progress-track">
+                    <div id="loading-progress-fill" class="loading-progress-fill"></div>
+                </div>
+                <div class="loading-progress-meta">
+                    <span id="loading-progress-label">Starting</span>
+                    <span id="loading-progress-value">0%</span>
+                </div>
+                <div id="loading-stage-list" class="loading-stage-list"></div>
+                <div id="loading-floating-words" class="loading-floating-words hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen auth-screen">
+        <div class="auth-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1>Canopy</h1>
+                <p class="tagline">Meeting Workspace for moments, follow-ups, and clean handoffs into BRD work</p>
+            </div>
+            
+            <div class="features-preview">
+                <div class="feature-item">
+                    <span class="feature-icon">🎙️</span>
+                    <span>One-tap recording</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📝</span>
+                    <span>Smart transcription</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✅</span>
+                    <span>Task extraction</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📅</span>
+                    <span>Calendar sync</span>
+                </div>
+            </div>
+            
+            <div class="auth-buttons">
+                <div id="descope-widget-container"></div>
+                <p class="auth-note">Sign in to save your meetings and open them again later</p>
+            </div>
+            
+            <div class="auth-divider">or</div>
+            
+            <button class="btn-guest" onclick="App.continueAsGuest()">
+                👤 Continue as Guest
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="main-screen" class="screen main-screen hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="portal-header-group">
+                    <div class="portal-brand">
+                        <div class="logo-small portal-brand-mark">C</div>
+                        <div class="portal-brand-copy">
+                            <span class="portal-brand-eyebrow">Canopy Portal</span>
+                            <h1>Meeting Workspace</h1>
+                            <p>Capture the meeting, clean the follow-up, and move into BRD work from the same product family.</p>
+                        </div>
+                    </div>
+                    <div class="portal-module-switch" aria-label="Portal modules">
+                        <a id="portal-link-meetings" class="portal-module-pill is-active" href="#">MoM Workspace</a>
+                        <a id="portal-link-brd" class="portal-module-pill" href="#">BRD Studio</a>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" onclick="App.openHistory()" title="Meeting History">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" onclick="App.openSettings()" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+                <div class="user-menu" onclick="App.toggleUserMenu()">
+                    <img id="user-avatar" src="" alt="User" class="avatar">
+                    <div id="user-dropdown" class="dropdown hidden">
+                        <div class="dropdown-header">
+                            <span id="user-name"></span>
+                            <span id="user-email" class="text-muted"></span>
+                        </div>
+                        <hr>
+                        <button onclick="App.logout()">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hidden helpers (stats are still computed but no longer chrome) -->
+            <div class="visually-hidden">
+                <span id="hero-active-mode">Record</span>
+                <span id="hero-attendee-count">0</span>
+                <span id="hero-meeting-count">0</span>
+                <span id="hero-execution-health">--</span>
+                <span id="hero-execution-copy"></span>
+                <span id="capture-note-title"></span>
+                <span id="capture-note-copy"></span>
+            </div>
+
+            <div class="workspace-grid">
+                <div class="workspace-primary">
+                    <!-- Input Section — mic FIRST, no verbose chrome -->
+                    <section class="input-section capture-panel">
+                        <div id="first-run-guide" class="first-run-guide hidden">
+                            <div class="first-run-guide-copy">
+                                <span class="eyebrow">First run</span>
+                                <h3>See the full workflow in under 15 seconds</h3>
+                                <p id="first-run-guide-copy">Add your email once, then run a sample meeting to see the MoM, calendar follow-ups, BRD handoff, and business KPIs without extra setup.</p>
+                            </div>
+                            <div class="first-run-guide-actions">
+                                <button id="first-run-primary-btn" class="btn btn-primary" onclick="App.prepareInstantDemo()">
+                                    Add email and continue
+                                </button>
+                                <button class="btn btn-secondary" onclick="App.switchInputTab('record')">
+                                    Record live instead
+                                </button>
+                                <button class="guide-link-btn" onclick="App.dismissFirstRunGuide()">
+                                    Dismiss
+                                </button>
+                            </div>
+                            <div class="first-run-checklist">
+                                <div class="first-run-item">
+                                    <strong>1</strong>
+                                    <span>Set one email so auto-send has a default recipient.</span>
+                                </div>
+                                <div class="first-run-item">
+                                    <strong>2</strong>
+                                    <span>Run a sample conversation or start talking immediately.</span>
+                                </div>
+                                <div class="first-run-item">
+                                    <strong>3</strong>
+                                    <span>Review MoM, calendar actions, KPI score, and BRD output in one place.</span>
+                                </div>
+                            </div>
+                        </div>
+                <div class="input-tabs">
+                    <button class="tab-btn active" data-tab="record" onclick="App.switchInputTab('record')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                        </svg>
+                        Record
+                    </button>
+                    <button class="tab-btn" data-tab="upload" onclick="App.switchInputTab('upload')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17,8 12,3 7,8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Upload
+                    </button>
+                    <button class="tab-btn" data-tab="paste" onclick="App.switchInputTab('paste')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        Paste Transcript
+                    </button>
+                </div>
+
+                <!-- Record Tab -->
+                <div id="tab-record" class="tab-content active">
+                    <div class="record-section">
+                        <button id="record-btn" class="record-btn" onclick="App.toggleRecording()">
+                            <div class="record-btn-inner">
+                                <svg id="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="23"/>
+                                    <line x1="8" y1="23" x2="16" y2="23"/>
+                                </svg>
+                                <svg id="stop-icon" class="hidden" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="6" y="6" width="12" height="12" rx="2"/>
+                                </svg>
+                            </div>
+                        </button>
+                        <p id="record-status" class="record-status">Tap to start recording</p>
+                        <p id="record-help" class="record-help">Live recording needs browser microphone access and a configured speech-to-text provider. If recording is blocked, switch to Upload or Paste.</p>
+                        <div id="recording-timer" class="recording-timer hidden">
+                            <span class="pulse-dot"></span>
+                            <span id="timer-display">00:00</span>
+                        </div>
+                        <div id="audio-visualizer" class="audio-visualizer hidden">
+                            <canvas id="visualizer-canvas"></canvas>
+                        </div>
+                        <div class="capture-support">
+                            <div class="support-point">
+                                <strong>Live capture</strong>
+                                <span>Ideal for calls, standups, and brainstorming sessions.</span>
+                            </div>
+                            <div class="support-point">
+                                <strong>Auto analysis</strong>
+                                <span>Creates notes, action items, and follow-up content after recording.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="tab-upload" class="tab-content hidden">
+                    <div class="upload-section">
+                        <div class="upload-dropzone" id="dropzone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17,8 12,3 7,8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <p>Drag & drop audio file here</p>
+                            <p class="text-muted">or click to browse</p>
+                            <input type="file" id="file-input" accept="audio/*,video/*" hidden>
+                        </div>
+                        <p class="upload-info">Supports: MP3, WAV, M4A, OGG, WebM (Max 100MB)</p>
+                        <div class="capture-support capture-support-inline">
+                            <div class="support-point">
+                                <strong>Best for existing recordings</strong>
+                                <span>Use this for Zoom exports, voice notes, and interview files.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paste Tab -->
+                <div id="tab-paste" class="tab-content hidden">
+                    <div class="paste-section">
+                        <label for="transcript-input">Paste your meeting transcript:</label>
+                        <textarea 
+                            id="transcript-input" 
+                            placeholder="Paste your meeting notes or transcript here...
+
+Example:
+John: Let's discuss the Q1 targets. Sarah, can you have the report ready by Friday?
+Sarah: Sure, I'll prepare the financial summary.
+Mike: We should also schedule a follow-up next Tuesday at 2 PM.
+John: Great, let's also set up a demo call with the client on March 15th."
+                            rows="10"
+                        ></textarea>
+                        <div class="paste-actions">
+                            <button class="btn btn-primary" onclick="App.processTranscript()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="5,3 19,12 5,21 5,3"/>
+                                </svg>
+                                Process Transcript
+                            </button>
+                        </div>
+                        <div class="capture-support capture-support-inline">
+                            <div class="support-point">
+                                <strong>Fastest path to insights</strong>
+                                <span>Great when your transcript already exists and you only need the outputs.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+                </div>
+
+                <aside class="workspace-sidebar">
+                    <!-- Quick Profile Section (Home Screen) -->
+                    <section class="profile-card" id="profile-card">
+                        <span class="eyebrow">Meeting setup</span>
+                        <h3>Your Info</h3>
+                        <p class="profile-desc">Use your name and email so the summary, attendees, and follow-up email stay accurate.</p>
+                        <div class="profile-inputs">
+                            <div class="profile-field">
+                                <label for="home-profile-name">Name</label>
+                                <input type="text" id="home-profile-name" placeholder="Your name" onchange="App.saveQuickProfile()">
+                            </div>
+                            <div class="profile-field">
+                                <label for="home-profile-email">Email</label>
+                                <input type="email" id="home-profile-email" placeholder="your@email.com" onchange="App.saveQuickProfile()">
+                            </div>
+                        </div>
+                        <div class="automation-card">
+                            <div class="automation-card-header">
+                                <span class="eyebrow">Direct use mode</span>
+                                <h4>What happens after you stop talking</h4>
+                                <p id="automation-readiness-copy">Add your email once and Meeting Master will use it as the default follow-up destination when no attendee list is added.</p>
+                            </div>
+                            <div class="automation-status-grid">
+                                <div class="automation-status-item">
+                                    <span>Default recipient</span>
+                                    <strong id="automation-default-recipient">Not set</strong>
+                                </div>
+                                <div class="automation-status-item">
+                                    <span>MoM delivery</span>
+                                    <strong id="automation-email-status">Needs your email</strong>
+                                </div>
+                                <div class="automation-status-item">
+                                    <span>Calendar follow-up</span>
+                                    <strong id="automation-calendar-status">Auto-detects meeting dates</strong>
+                                </div>
+                                <div class="automation-status-item">
+                                    <span>Business KPIs</span>
+                                    <strong id="automation-kpi-status">Shown after every meeting</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Quick Attendees Section (Home Screen) -->
+                    <section class="profile-card" id="attendees-card">
+                        <span class="eyebrow">Collaboration</span>
+                        <h3>Meeting Attendees</h3>
+                        <p class="profile-desc">Add attendees before processing so ownership, calendar suggestions, and the follow-up draft are more useful.</p>
+                        <div id="home-attendees-list" class="attendees-list">
+                            <!-- Attendees will be listed here -->
+                        </div>
+                        <div class="add-attendee-row">
+                            <input type="text" id="home-attendee-name" placeholder="Attendee name">
+                            <input type="email" id="home-attendee-email" placeholder="email@example.com">
+                            <button class="btn btn-secondary btn-sm" onclick="App.addHomeAttendee()">+ Add</button>
+                        </div>
+                    </section>
+
+                    <!-- File search (Gemini RAG) — ingest emails & launch docs -->
+                    <section class="profile-card" id="filesearch-card">
+                        <span class="eyebrow">Knowledge base</span>
+                        <h3>File Search (RAG)</h3>
+                        <p class="profile-desc" id="filesearch-status-text">Checking connection&hellip;</p>
+                        <div class="profile-inputs">
+                            <div class="profile-field">
+                                <label for="filesearch-ingest-title">Title</label>
+                                <input type="text" id="filesearch-ingest-title" placeholder="e.g. Product launch email — Sep 14">
+                            </div>
+                            <div class="profile-field">
+                                <label for="filesearch-ingest-body">Email / document text</label>
+                                <textarea id="filesearch-ingest-body" rows="4" placeholder="Paste an email body, launch note, or any text you want searchable later..."></textarea>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-top:0.5rem;">
+                            <button class="btn btn-primary btn-sm" onclick="App.ingestFilesearchText()">Ingest text</button>
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                Upload file
+                                <input type="file" id="filesearch-ingest-file" style="display:none;" accept=".pdf,.txt,.md,.docx" onchange="App.ingestFilesearchFile(event)">
+                            </label>
+                            <button class="btn btn-secondary btn-sm" onclick="App.refreshFilesearchStatus()">Refresh status</button>
+                        </div>
+                        <div style="margin-top:0.75rem;">
+                            <label for="filesearch-query" style="font-size:0.8rem;color:var(--gray-700);">Search the ingested knowledge:</label>
+                            <div style="display:flex;gap:0.5rem;margin-top:0.25rem;">
+                                <input type="text" id="filesearch-query" placeholder="Ask a question..." style="flex:1;">
+                                <button class="btn btn-primary btn-sm" onclick="App.searchFilesearch()">Search</button>
+                            </div>
+                            <div id="filesearch-result" class="filesearch-result text-muted" style="margin-top:0.5rem;font-size:0.8rem;"></div>
+                        </div>
+                    </section>
+
+                    <section class="guide-card">
+                        <span class="eyebrow">What better meeting apps do</span>
+                        <h3>Keep the flow simple</h3>
+                        <div class="guide-step">
+                            <div class="guide-step-number">1</div>
+                            <div>
+                                <strong>Start fast</strong>
+                                <p>Record, upload, or paste a transcript in one tap.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="guide-step-number">2</div>
+                            <div>
+                                <strong>Review what matters</strong>
+                                <p>See the summary, decisions, and next steps before the long transcript.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="guide-step-number">3</div>
+                            <div>
+                                <strong>Share the follow-up</strong>
+                                <p>Edit the action items and send the meeting update from the same place.</p>
+                            </div>
+                        </div>
+                        <div class="guide-feature-strip">
+                            <span>Summary-first</span>
+                            <span>Clear actions</span>
+                            <span>Easy sharing</span>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+
+            <!-- Results Section -->
+            <section id="results-section" class="results-section hidden">
+                <div class="results-header">
+                    <div>
+                        <span class="eyebrow">Review workspace</span>
+                        <h2>Meeting Analysis</h2>
+                        <p class="results-subtitle">Review the summary first, then adjust tasks and the follow-up message only where needed.</p>
+                    </div>
+                    <div class="meeting-meta">
+                        <span id="meeting-date"></span>
+                        <span id="meeting-duration"></span>
+                    </div>
+                </div>
+
+                <div class="results-overview">
+                    <div class="overview-card">
+                        <span class="overview-label">Summary</span>
+                        <strong id="overview-summary-status">Waiting</strong>
+                        <p id="overview-summary-copy">Process a meeting to generate the brief.</p>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-label">Tasks</span>
+                        <strong id="overview-task-total">0</strong>
+                        <p>Action items pulled from the conversation.</p>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-label">Calendar</span>
+                        <strong id="overview-calendar-total">0</strong>
+                        <p>Suggested events that need follow-up.</p>
+                    </div>
+                    <div class="overview-card">
+                        <span class="overview-label">Email</span>
+                        <strong id="overview-email-status">Draft</strong>
+                        <p>Shareable MoM follow-up content.</p>
+                    </div>
+                </div>
+
+                <div id="meeting-action-strip" class="meeting-action-strip hidden">
+                    <div class="meeting-action-copy">
+                        <span class="eyebrow">One-step follow-up</span>
+                        <h3>Your meeting is ready to move</h3>
+                        <p id="meeting-action-copy">Review the draft, send the MoM email, inspect suggested follow-up holds, or turn this meeting into a BRD.</p>
+                    </div>
+                    <div class="meeting-action-buttons">
+                        <button id="meeting-primary-action-btn" class="btn btn-primary" onclick="App.runPrimaryMeetingAction()">
+                            Send MoM Email
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.openResultView('calendar-email')">
+                            Review Follow-ups
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.generateBrdFromMeeting()">
+                            Generate BRD
+                        </button>
+                    </div>
+                </div>
+
+                <div id="meeting-kpi-panel" class="meeting-kpi-panel hidden">
+                    <div class="meeting-kpi-header">
+                        <div>
+                            <span class="eyebrow">Execution intelligence</span>
+                            <h3>Business KPI Snapshot</h3>
+                        </div>
+                        <div class="meeting-kpi-score-shell">
+                            <span class="meeting-kpi-score-label">Execution Health Index</span>
+                            <strong id="meeting-kpi-score">--</strong>
+                        </div>
+                    </div>
+                    <div class="meeting-kpi-grid">
+                        <article class="meeting-kpi-card">
+                            <span class="meeting-kpi-label">Context completeness</span>
+                            <strong id="kpi-context-completeness">--</strong>
+                            <p>How ready the meeting output is for real follow-through.</p>
+                        </article>
+                        <article class="meeting-kpi-card">
+                            <span class="meeting-kpi-label">Action leakage</span>
+                            <strong id="kpi-action-leakage">--</strong>
+                            <p>Commitments detected in conversation but not converted into tracked actions.</p>
+                        </article>
+                        <article class="meeting-kpi-card">
+                            <span class="meeting-kpi-label">Ownership coverage</span>
+                            <strong id="kpi-ownership-coverage">--</strong>
+                            <p>Share of extracted tasks that already have clear owners.</p>
+                        </article>
+                        <article class="meeting-kpi-card">
+                            <span class="meeting-kpi-label">Automation status</span>
+                            <strong id="kpi-automation-status">--</strong>
+                            <p id="kpi-automation-copy">Email and calendar workflow readiness for this meeting.</p>
+                        </article>
+                    </div>
+                    <div id="meeting-kpi-missing" class="meeting-kpi-missing hidden"></div>
+                </div>
+
+                <div id="meeting-summary-container" class="meeting-summary-container hidden">
+                    <div class="summary-heading">
+                        <div>
+                            <span class="eyebrow">Executive summary</span>
+                            <h3>What happened in this meeting</h3>
+                        </div>
+                        <div id="summary-tags" class="summary-tags"></div>
+                    </div>
+                    <div id="meeting-summary-highlight" class="summary-highlight"></div>
+                    <div id="meeting-summary-text" class="summary-text"></div>
+                </div>
+
+                <div class="results-tabs">
+                    <button class="results-tab active" data-results="transcript" onclick="App.switchResultsTab('transcript')">
+                        📝 Transcript
+                    </button>
+                    <button class="results-tab" data-results="tasks" onclick="App.switchResultsTab('tasks')">
+                        ✅ Tasks <span id="task-count" class="badge">0</span>
+                    </button>
+                    <button class="results-tab" data-results="calendar-email" onclick="App.switchResultsTab('calendar-email')">
+                        📅✉️ Follow-ups &amp; Email <span id="calendar-count" class="badge">0</span>
+                    </button>
+                </div>
+
+                <!-- Transcript Results -->
+                <div id="results-transcript" class="results-content active">
+                    <div class="transcript-language-tabs">
+                        <button class="lang-tab active" data-lang="en" onclick="App.switchLang('en')">English</button>
+                        <button class="lang-tab" data-lang="native" onclick="App.switchLang('native')" id="lang-tab-native">Native</button>
+                    </div>
+                    <div class="transcript-content">
+                        <div id="transcript-en" class="transcript-text" data-empty-text="English translation not available yet."></div>
+                        <div id="transcript-native" class="transcript-text hidden" data-empty-text="Native transcript not available."></div>
+                    </div>
+                    <p id="transcript-translation-note" class="text-muted" style="margin:0.5rem 0 0;font-size:0.8rem;">
+                        The Native tab shows the original language exactly as captured. English is an LLM translation.
+                    </p>
+                    <div class="transcript-actions">
+                        <button class="btn btn-secondary" onclick="App.copyTranscript()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copy
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.downloadTranscript()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tasks Results -->
+                <div id="results-tasks" class="results-content hidden">
+                    <div class="tasks-list" id="tasks-list">
+                        <!-- Tasks will be rendered here -->
+                    </div>
+                    <div class="tasks-actions">
+                        <button class="btn btn-secondary" onclick="App.addTask()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="16"/>
+                                <line x1="8" y1="12" x2="16" y2="12"/>
+                            </svg>
+                            Add Task
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Calendar & Email Combined Results -->
+                <div id="results-calendar-email" class="results-content hidden">
+                    <!-- Recipients (chip input) + Send -->
+                    <div class="email-preview">
+                        <div class="email-field">
+                            <label for="email-to-input">Recipients (this list goes to both email & calendar invite):</label>
+                            <div class="email-recipient-shell">
+                                <div id="email-recipient-chips" class="email-recipient-chips" aria-live="polite"></div>
+                                <input type="email" id="email-to-input"
+                                    placeholder="Type an email and press Enter…"
+                                    class="email-recipient-input"
+                                    onkeydown="App.addRecipientFromInput(event)"
+                                    onblur="if(this.value.trim()){App.addRecipientFromInput({key:'Enter',preventDefault:()=>{},target:this});}">
+                            </div>
+                            <p class="email-recipient-hint">Press Enter, comma or Tab to add each address. Click × on any chip to remove it.</p>
+                            <input type="hidden" id="email-to" value="">
+                        </div>
+                        <div class="email-actions">
+                            <button class="btn btn-secondary" onclick="App.copyEmail()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                                Copy
+                            </button>
+                            <button id="send-email-btn" class="btn btn-primary" onclick="App.sendEmail()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+                                </svg>
+                                Send MoM Email
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MoM email subject + body (editable, with formatted preview) -->
+                    <div class="email-preview" style="margin-top:1rem;">
+                        <div class="email-field">
+                            <label>Subject:</label>
+                            <input type="text" id="email-subject" placeholder="Meeting Summary">
+                        </div>
+                        <div class="email-body">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin-bottom:0.5rem;">
+                                <label style="margin:0;">Body:</label>
+                                <div class="mom-view-toggle" style="display:flex;gap:0.25rem;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="mom-view-preview" onclick="App.setMomView('preview')">Preview</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="mom-view-source" onclick="App.setMomView('source')">Edit Markdown</button>
+                                </div>
+                            </div>
+                            <div id="email-content-preview" class="email-preview-rendered"></div>
+                            <div id="email-content" contenteditable="true" class="email-editor hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar events list (will be created on Send) -->
+                    <div class="summary-heading" style="margin-top:1.5rem;">
+                        <div>
+                            <span class="eyebrow">Follow-up holds</span>
+                            <h3>Suggested events to review</h3>
+                        </div>
+                    </div>
+                    <div class="calendar-events" id="calendar-events">
+                        <!-- Calendar events will be rendered here -->
+                    </div>
+                    <div class="calendar-actions">
+                        <button class="btn btn-secondary" onclick="App.addEvent()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="16"/>
+                                <line x1="8" y1="12" x2="16" y2="12"/>
+                            </svg>
+                            Add Event
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Save Meeting Button -->
+                <div class="save-section">
+                    <div class="save-copy">
+                        <span class="eyebrow">Keep this analysis</span>
+                        <h3>Save and revisit later</h3>
+                        <p>Give the meeting a clear name so it is easy to find in history and share with your team.</p>
+                    </div>
+                    <div class="save-form">
+                        <input type="text" id="meeting-title" placeholder="Meeting Title (optional)">
+                        <button class="btn btn-secondary btn-large" onclick="App.generateBrdFromMeeting()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="12" y1="18" x2="12" y2="12"/>
+                                <line x1="9" y1="15" x2="15" y2="15"/>
+                            </svg>
+                            Generate BRD
+                        </button>
+                        <button class="btn btn-primary btn-large" onclick="App.saveMeeting()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17,21 17,13 7,13 7,21"/>
+                                <polyline points="7,3 7,8 15,8"/>
+                            </svg>
+                            Save Meeting
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="App.closeSettings()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Workspace</h2>
+                <button class="btn-close" onclick="App.closeSettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- User Profile Section -->
+                <section class="settings-section">
+                    <h3>Your Profile</h3>
+                    <p class="setting-desc">Your name and email help keep meeting ownership and follow-up drafts accurate.</p>
+                    <div class="setting-group">
+                        <label for="user-profile-name">Your Name:</label>
+                        <input type="text" id="user-profile-name" placeholder="Enter your name">
+                    </div>
+                    <div class="setting-group">
+                        <label for="user-profile-email">Your Email:</label>
+                        <input type="email" id="user-profile-email" placeholder="Enter your email">
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h3>Meeting Defaults</h3>
+                    <p class="setting-desc">Meeting Master handles the technical setup for you, so you only keep the basics here.</p>
+                    <div class="setting-group">
+                        <label for="default-language">Default Language:</label>
+                        <select id="default-language">
+                            <option value="en">English</option>
+                            <option value="hi">Hindi</option>
+                            <option value="auto">Auto-detect</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="speaker-diarization" checked>
+                            <span class="checkbox-custom"></span>
+                            Enable speaker identification
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Team Members -->
+                <section class="settings-section">
+                    <h3>Team Members</h3>
+                    <p class="setting-desc">Add team members for better attendee identification</p>
+                    <div id="team-list" class="team-list">
+                        <!-- Team members will be rendered here -->
+                    </div>
+                    <div class="add-team-member">
+                        <input type="text" id="new-member-name" placeholder="Name">
+                        <input type="email" id="new-member-email" placeholder="Email">
+                        <button class="btn btn-secondary" onclick="App.addTeamMember()">Add</button>
+                    </div>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="App.saveSettings()">Save Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="App.closeHistory()"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Meeting History</h2>
+                <button class="btn-close" onclick="App.closeHistory()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-search">
+                    <input type="text" id="history-search" placeholder="Search meetings..." oninput="App.searchHistory()">
+                </div>
+                <div id="history-list" class="history-list">
+                    <!-- History items will be rendered here -->
+                </div>
+                <div id="history-pagination" class="pagination">
+                    <!-- Pagination will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/app.js?v=1.9"></script>
+</body>
+</html>
